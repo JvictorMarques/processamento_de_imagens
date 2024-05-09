@@ -7,40 +7,40 @@ import java.util.Arrays;
 import static java.lang.Math.sqrt;
 
 public class OperacoesLocais {
-    public static BufferedImage media3x3(BufferedImage imgEntrada){
+    public static BufferedImage media(BufferedImage imgEntrada){ // media 3x3
         int altura = imgEntrada.getHeight();
         int largura = imgEntrada.getWidth();
 
         BufferedImage imgSaida = new BufferedImage(largura, altura, imgEntrada.getType());
         for(int h = 0; h<altura; h++) {
             for (int w = 0; w<largura ; w++) {
-                if(ePixelBorda3x3(h, w, altura, largura)){ //borda evita o clone da imagem
+                if(ePixelBorda(h, w, altura, largura)){
                     int rgb = imgEntrada.getRGB(w, h);
                     imgSaida.setRGB(w, h, rgb);
                     continue;
                 }
-                int[] vizinhanca = obterVizinhanca3x3(imgEntrada, w, h);
+                int[] vizinhanca = obterVizinhanca(imgEntrada, w, h);
                 int media = Arrays.stream(vizinhanca).sum() / 9;
-                Color novaCor = new Color(media, media, media); // o color quebra os bytes por cor
+                Color novaCor = new Color(media, media, media);
                 imgSaida.setRGB(w,h,novaCor.getRGB());
             }
         }
         return imgSaida;
     }
 
-    public static BufferedImage mediana3x3(BufferedImage imgEntrada){
+    public static BufferedImage mediana(BufferedImage imgEntrada) { //mediana 3x3
         int altura = imgEntrada.getHeight();
         int largura = imgEntrada.getWidth();
 
         BufferedImage imgSaida = new BufferedImage(largura, altura, imgEntrada.getType());
         for(int h = 0; h<altura; h++) {
             for (int w = 0; w<largura ; w++) {
-                if(ePixelBorda3x3(h, w, altura, largura)){ //borda evita o clone da imagem
+                if(ePixelBorda(h, w, altura, largura)) {
                     int rgb = imgEntrada.getRGB(w, h);
                     imgSaida.setRGB(w, h, rgb);
                     continue;
                 }
-                int[] vizinhanca = obterVizinhanca3x3(imgEntrada, w, h);
+                int[] vizinhanca = obterVizinhanca(imgEntrada, w, h);
                 Arrays.sort(vizinhanca);
                 int mediana = vizinhanca[4];
 
@@ -50,7 +50,7 @@ public class OperacoesLocais {
         }
         return imgSaida;
     }
-    private static int[] obterVizinhanca3x3(BufferedImage imgEntrada, int w, int h) {
+    private static int[] obterVizinhanca(BufferedImage imgEntrada, int w, int h) { //obter_vizinhaça3x3
         int[] vizinhanca= new int[9];
         int count = 0;
         for (int i=-1; i <= 1; i ++){// linha
@@ -62,7 +62,7 @@ public class OperacoesLocais {
         }
         return vizinhanca;
     }
-    private static boolean ePixelBorda3x3(int h, int w, int altura, int largura) {
+    private static boolean ePixelBorda(int h, int w, int altura, int largura) { //ePixelBorda3x3
         return h == 0 || w == 0 || h == altura - 1 || w == largura - 1;
     }
     public static BufferedImage media(BufferedImage imgEntrada, int tamanho) {
@@ -132,32 +132,60 @@ public class OperacoesLocais {
     private static int tamanho_borda(int tamanho) {
         return (int) sqrt(tamanho)/2;
     }
-    /*public static BufferedImage convolucao(BufferedImage imgEntrada, double[] kernel){
+    public static BufferedImage convolucao(BufferedImage imgEntrada, double[] kernel) { //convolução 3x3 filtro double
+        int altura = imgEntrada.getHeight();
+        int largura = imgEntrada.getWidth();
+        //BufferedImage imgCinza = OperacoesPontuais.greyScaleMedia(imgEntrada);
+        BufferedImage imgSaida = new BufferedImage(largura, altura, imgEntrada.getType());
+
+        for(int h = 0; h < altura ; h++) {
+            for (int w = 0; w<largura ; w++) {
+                if(ePixelBorda(h, w, altura, largura)) {
+                    int rgb = imgEntrada.getRGB(w, h);
+                    imgSaida.setRGB(w, h, rgb);
+                    continue;
+                }
+                int[] vizinhanca = obterVizinhanca(imgEntrada/*imgCinza*/, w, h);
+                double resultado = 0.0;
+
+                for(int i=0; i<9; i++) {
+                    resultado+= vizinhanca[i] * kernel[i];
+                }
+                if (resultado > 255) resultado = 255;
+                else if (resultado < 0) resultado = 0;
+
+                Color novaCor = new Color((int)resultado, (int)resultado, (int)resultado);
+                imgSaida.setRGB(w,h,novaCor.getRGB());
+            }
+        }
+        return imgSaida;
+    }
+
+    public static BufferedImage convolucao(BufferedImage imgEntrada, int[] kernel) { //convolução 3x3 filtro inteiros
         int altura = imgEntrada.getHeight();
         int largura = imgEntrada.getWidth();
 
         BufferedImage imgSaida = new BufferedImage(largura, altura, imgEntrada.getType());
-        for(int h = 0; h<altura; h++) {
+        for(int h = 0; h<altura ; h++) {
             for (int w = 0; w<largura ; w++) {
-                if(ePixelBorda(h, w, altura, largura)){ //borda evita o clone da imagem
+                if(ePixelBorda(h, w, altura, largura)) {
                     int rgb = imgEntrada.getRGB(w, h);
                     imgSaida.setRGB(w, h, rgb);
                     continue;
                 }
                 int[] vizinhanca = obterVizinhanca(imgEntrada, w, h);
-                double resultado = 0.0;
+                int resultado = 0;
 
-                for(int i=0; i<9; i++){
-                    resultado+= vizinhanca[i] + kernel[i];
+                for(int i=0; i<9; i++) {
+                    resultado+= vizinhanca[i] * kernel[i];
                 }
                 if (resultado > 255) resultado = 255;
                 else if (resultado < 0) resultado = 0;
 
-                Color novaCor = new Color((int)resultado, (int)resultado, (int)resultado); // o color quebra os bytes por cor
+                Color novaCor = new Color((int)resultado, (int)resultado, (int)resultado);
                 imgSaida.setRGB(w,h,novaCor.getRGB());
             }
         }
         return imgSaida;
-    }*/
-
+    }
 }
